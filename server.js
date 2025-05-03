@@ -8,11 +8,13 @@ const path = require('path');
 // Configurações
 const PORT = process.env.PORT || 3000;
 const PEER_CONFIG = {
-  debug: false,
+  debug: true,
   path: '/',
   allow_discovery: true,
   alive_timeout: 60000,
-  key: 'peerjs'
+  key: 'peerjs',
+  proxied: true,
+  ssl: process.env.NODE_ENV === 'production' ? {} : undefined
 };
 
 const CORS_OPTIONS = {
@@ -70,6 +72,11 @@ app.use((req, res, next) => {
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Accept, Origin, X-Requested-With');
   res.setHeader('Access-Control-Allow-Credentials', 'true');
+  
+  // Adicionar cabeçalhos específicos para WebSockets
+  if (req.headers.upgrade && req.headers.upgrade.toLowerCase() === 'websocket') {
+    res.setHeader('Sec-WebSocket-Protocol', 'peerjs');
+  }
   
   next();
 });
