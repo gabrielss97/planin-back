@@ -163,15 +163,6 @@ app.get('/', (req, res) => {
   res.send('PeerJS server is running!');
 });
 
-app.get('/peers', (req, res) => {
-  const activePeers = getActivePeers();
-  
-  res.json({
-    active: activePeers,
-    count: activePeers.length
-  });
-});
-
 // Rota para registrar uma nova visita
 app.post('/register-visit', (req, res) => {
   try {
@@ -225,18 +216,6 @@ app.get('/visitor-count', (req, res) => {
     res.status(500).json({ error: 'Erro ao buscar contagem de visitantes' });
   }
 });
-
-// Funções auxiliares
-function getActivePeers() {
-  try {
-    if (peerServer._clients && typeof peerServer._clients.getIds === 'function') {
-      return peerServer._clients.getIds();
-    }
-    return Array.from(connectedPeers);
-  } catch {
-    return Array.from(connectedPeers);
-  }
-}
 
 // Inicializar servidor
 server.listen(PORT);
