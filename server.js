@@ -1,64 +1,58 @@
 const express = require('express');
 const { ExpressPeerServer } = require('peer');
 const cors = require('cors');
+const http = require('http');
 
-const app = express();
-app.use(cors({
+// Configurações
+const PORT = process.env.PORT || 3000;
+const PEER_CONFIG = {
+  debug: false,
+  path: '/',
+  allow_discovery: true,
+  alive_timeout: 60000,
+  key: 'peerjs'
+};
+
+const CORS_OPTIONS = {
   origin: '*',
   methods: ['GET', 'POST'],
   allowedHeaders: ['Content-Type']
-}));
+};
 
-const server = require('http').createServer(app);
+// Armazenamento de peers
+const connectedPeers = new Set();
 
-const peerServer = ExpressPeerServer(server, {
-  debug: true,
-  path: '/',
-  allow_discovery: true,
-  alive_timeout: 60000, // 60 segundos
-  key: 'peerjs' // Chave padrão que o PeerJS espera
-});
+// Configuração do servidor Express
+const app = express();
+app.use(cors(CORS_OPTIONS));
+const server = http.createServer(app);
 
-// Lista para manter registro dos peers conectados
-let connectedPeers = new Set();
+// Configuração do servidor PeerJS
+const peerServer = ExpressPeerServer(server, PEER_CONFIG);
 
-// Adicionar evento para logs
-peerServer.on('connection', (client) => {
+// Manipuladores de eventos do PeerJS
+function handlePeerConnection(client) {
   const id = client.getId ? client.getId() : client.id;
-  console.log(`Client connected: ${id}`);
   connectedPeers.add(id);
-});
+}
 
-peerServer.on('disconnect', (client) => {
+function handlePeerDisconnect(client) {
   const id = client.getId ? client.getId() : client.id;
-  console.log(`Client disconnected: ${id}`);
   connectedPeers.delete(id);
-});
+}
 
+peerServer.on('connection', handlePeerConnection);
+peerServer.on('disconnect', handlePeerDisconnect);
+
+// Rotas
 app.use('/peerjs', peerServer);
 
 app.get('/', (req, res) => {
   res.send('PeerJS server is running!');
 });
 
-// Endpoint para verificar peers ativos
 app.get('/peers', (req, res) => {
-  let activePeers = [];
-  
-  try {
-    // Tenta obter peers da forma tradicional
-    if (peerServer._clients && typeof peerServer._clients.getIds === 'function') {
-      activePeers = peerServer._clients.getIds();
-    } 
-    // Fallback para nossa lista mantida manualmente
-    else {
-      activePeers = Array.from(connectedPeers);
-    }
-  } catch (err) {
-    console.error('Erro ao obter lista de peers:', err);
-    // Usa o fallback se ocorrer erro
-    activePeers = Array.from(connectedPeers);
-  }
+  const activePeers = getActivePeers();
   
   res.json({
     active: activePeers,
@@ -66,7 +60,17 @@ app.get('/peers', (req, res) => {
   });
 });
 
-const PORT = process.env.PORT || 3000;
-server.listen(PORT, () => {
-  console.log(`PeerJS server running on port ${PORT}`);
-});
+// Funções auxiliares
+function getActivePeers() {
+  try {
+    if (peerServer._clients && typeof peerServer._clients.getIds === 'function') {
+      return peerServer._clients.getIds();
+    }
+    return Array.from(connectedPeers);
+  } catch {
+    return Array.from(connectedPeers);
+  }
+}
+
+// Inicializar servidor
+server.listen(PORT);
