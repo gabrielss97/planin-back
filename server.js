@@ -240,4 +240,3 @@ function getActivePeers() {
 
 // Inicializar servidor
 server.listen(PORT);
-console.log(`Servidor rodando na porta ${PORT}`);
