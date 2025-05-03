@@ -1,4 +1,9 @@
 {
-  "totalVisits": 0,
-  "visitors": []
-} 
+  "totalVisits": 1,
+  "visitors": [
+    {
+      "ip": "::1",
+      "timestamp": "2025-05-03T04:29:52.882Z"
+    }
+  ]
+}
