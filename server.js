@@ -16,18 +16,50 @@ const PEER_CONFIG = {
 };
 
 const CORS_OPTIONS = {
-  origin: '*',
-  methods: ['GET', 'POST'],
-  allowedHeaders: ['Content-Type']
+  origin: ['http://localhost:3000', 'http://localhost:5500', 'http://127.0.0.1:5500', 'https://planin-back.onrender.com', '*'],
+  methods: ['GET', 'POST', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Accept', 'Origin', 'X-Requested-With'],
+  exposedHeaders: ['Content-Length', 'Content-Type'],
+  credentials: true
 };
 
 // Armazenamento de peers
 const connectedPeers = new Set();
 
+// Configuração para rate limiting
+const ipRequestCounts = new Map();
+const MAX_REQUESTS_PER_HOUR = 100;
+const RATE_LIMIT_RESET_INTERVAL = 60 * 60 * 1000; // 1 hora em ms
+
+// Função para limpar contadores de rate limit periodicamente
+setInterval(() => {
+  ipRequestCounts.clear();
+}, RATE_LIMIT_RESET_INTERVAL);
+
+// Middleware para rate limiting
+function rateLimiter(req, res, next) {
+  const ip = req.headers['x-forwarded-for'] || req.connection.remoteAddress;
+  
+  if (!ipRequestCounts.has(ip)) {
+    ipRequestCounts.set(ip, 1);
+  } else {
+    const currentCount = ipRequestCounts.get(ip);
+    if (currentCount >= MAX_REQUESTS_PER_HOUR) {
+      return res.status(429).json({ 
+        error: 'Muitas requisições. Tente novamente mais tarde.' 
+      });
+    }
+    ipRequestCounts.set(ip, currentCount + 1);
+  }
+  
+  next();
+}
+
 // Configuração do servidor Express
 const app = express();
 app.use(cors(CORS_OPTIONS));
-app.use(express.json()); // Para processar requisições JSON
+app.use(express.json({ limit: '10kb' })); // Limitar tamanho do corpo das requisições
+app.use(rateLimiter); // Aplicar rate limiting em todas as rotas
 const server = http.createServer(app);
 
 // Caminho para arquivo de contagem de visitantes
@@ -61,6 +93,25 @@ function saveVisitorCount(data) {
   }
 }
 
+// Função para sanitizar dados de entrada
+function sanitizeInput(data) {
+  if (typeof data !== 'object' || data === null) return {};
+  
+  const sanitized = {};
+  
+  // Lista de campos permitidos
+  const allowedFields = ['timestamp'];
+  
+  for (const field of allowedFields) {
+    if (data[field] && typeof data[field] === 'string') {
+      // Limitar tamanho e sanitizar
+      sanitized[field] = data[field].substring(0, 50);
+    }
+  }
+  
+  return sanitized;
+}
+
 // Configuração do servidor PeerJS
 const peerServer = ExpressPeerServer(server, PEER_CONFIG);
 
@@ -81,6 +132,9 @@ peerServer.on('disconnect', handlePeerDisconnect);
 // Rotas
 app.use('/peerjs', peerServer);
 
+// Servir arquivos estáticos do frontend
+app.use(express.static(path.join(__dirname, '../planin-front')));
+
 app.get('/', (req, res) => {
   res.send('PeerJS server is running!');
 });
@@ -97,8 +151,11 @@ app.get('/peers', (req, res) => {
 // Rota para registrar uma nova visita
 app.post('/register-visit', (req, res) => {
   try {
-    // Obter o endereço IP do visitante e um timestamp
+    // Obter o endereço IP do visitante
     const ip = req.headers['x-forwarded-for'] || req.connection.remoteAddress;
+    
+    // Sanitizar dados de entrada
+    const sanitizedData = sanitizeInput(req.body);
     
     // Ler dados atuais
     const visitorData = readVisitorCount();
@@ -107,12 +164,17 @@ app.post('/register-visit', (req, res) => {
     const visitorExists = visitorData.visitors.some(visitor => visitor.ip === ip);
     
     if (!visitorExists) {
-      // Adicionar novo visitante
+      // Adicionar novo visitante com dados sanitizados
       visitorData.visitors.push({
         ip,
         timestamp: new Date().toISOString(),
-        ...req.body
+        ...sanitizedData
       });
+      
+      // Limitar o número de visitantes armazenados (manter apenas os 10000 mais recentes)
+      if (visitorData.visitors.length > 10000) {
+        visitorData.visitors = visitorData.visitors.slice(-10000);
+      }
       
       // Incrementar contagem total
       visitorData.totalVisits += 1;
