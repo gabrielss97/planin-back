@@ -1,0 +1,36 @@
+{
+  "testStartTime": "1970-01-01T00:00:00.434Z",
+  "testEndTime": "2025-05-07T20:27:14.305Z",
+  "totalDurationMs": 85804.2065,
+  "roundsCompleted": 0,
+  "optimalCapacity": 0,
+  "successThreshold": 85,
+  "browserMetrics": {
+    "totalLaunched": 2,
+    "successfulLaunches": 2,
+    "failedLaunches": 0
+  },
+  "connectionMetrics": {
+    "totalAttempted": 0,
+    "successful": 0,
+    "failed": 0,
+    "avgConnectionTimeMs": 0
+  },
+  "votingMetrics": {
+    "totalVotes": 0,
+    "successfulVotes": 0,
+    "voteSuccessRate": 0
+  },
+  "errorMetrics": {
+    "totalErrors": 1,
+    "byType": {
+      "host_setup_error": 1
+    }
+  },
+  "systemMetrics": {
+    "peakMemoryUsageMB": 0
+  },
+  "roundResults": [],
+  "serverType": "production",
+  "serverUrl": "https://planin-back.onrender.com"
+}

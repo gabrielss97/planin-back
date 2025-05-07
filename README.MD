@@ -54,12 +54,53 @@ Para executar o servidor em sua "estação de trabalho" local:
    npx nodemon server.js
    ```
 
+### 🧪 Testes de Integração e Carga 🧪
+
+O Planin 2000 inclui ferramentas de teste robustas para garantir que o sistema funcione bem mesmo sob alta demanda.
+
+#### Testes Disponíveis
+
+1. **Teste de Integração Básico**
+   ```
+   npm run test
+   # ou contra servidor local:
+   npm run test:local
+   ```
+   Simula 5 usuários conectando-se a uma sala e fazendo votações.
+
+2. **Teste de Carga**
+   ```
+   npm run test:load
+   # ou contra servidor local:
+   npm run test:load:local
+   ```
+   Incrementa gradualmente o número de usuários (5-30) para encontrar a capacidade máxima.
+
+3. **Teste de Carga Aprimorado**
+   ```
+   npm run test:enhanced-load
+   # ou contra servidor local:
+   npm run test:enhanced-load:local
+   ```
+   Versão melhorada do teste de carga com recursos para:
+   - Melhor compatibilidade com Render (free tier)
+   - Escalabilidade gradual com batches de usuários
+   - Métricas detalhadas de performance
+   - Relatórios abrangentes e screenshots
+
+#### Documentação de Testes
+
+- Para mais detalhes sobre o teste básico: [TESTING.md](./TESTING.md)
+- Para mais detalhes sobre o teste aprimorado: [test/ENHANCED-TESTING.md](./test/ENHANCED-TESTING.md)
+- Para informações sobre melhorias de conexão: [CONNECTION_IMPROVEMENTS.md](./CONNECTION_IMPROVEMENTS.md)
+
 ### 📊 Requisitos de Sistema 📊
 
 - Node.js (versão moderna, mas funcionaria em IE6 se pudesse)
 - NPM (não, não é o Napster)
 - 64MB de RAM (estamos brincando, mas este servidor é super leve!)
 - Conexão dial-up 56k ou superior
+- Para testes: Chrome instalado e pelo menos 4GB de RAM
 
 ### 🛠️ Contato de Suporte Técnico 🛠️
 

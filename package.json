@@ -3,12 +3,26 @@
     "version": "1.0.0",
     "main": "server.js",
     "scripts": {
-      "start": "node server.js"
+      "start": "node server.js",
+      "test": "node test/browser-test.js",
+      "test:local": "USE_LOCAL=true node test/browser-test.js",
+      "test:browser": "node test/browser-test.js",
+      "test:browser:local": "USE_LOCAL=true node test/browser-test.js",
+      "test:load": "node test/load-test.js",
+      "test:load:local": "USE_LOCAL=true node test/load-test.js",
+      "test:enhanced-load": "node test/enhanced-load-test.js",
+      "test:enhanced-load:local": "USE_LOCAL=true node test/enhanced-load-test.js"
     },
     "dependencies": {
       "cors": "^2.8.5",
       "express": "^4.18.2",
       "peer": "^0.6.1"
+    },
+    "devDependencies": {
+      "colors": "^1.4.0",
+      "peerjs": "^1.5.1",
+      "puppeteer": "^22.2.0",
+      "ws": "^8.16.0"
     }
   }
   
